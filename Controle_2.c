@@ -15,7 +15,33 @@ void interrupt(){                       // Interrup��o para garantir o TS em
                                         // atualizar o duty_cycle
      if(T0IF_bit){
         T0IF_bit = 0x00;
-        conta_quantidade_de_interrupcoes = 1;
+        leitura = ADC_Read(4);
+        leitura = (leitura*5.0f/1024.0f);  // 0.0488 = (5/1024)
+        //FloatToStr(leitura,Debug);
+        //Lcd_Out(1,1,Debug);
+        erro = ref - leitura;
+        //FloatToStr(erro,Debug);
+        //Lcd_Out(1,1,Debug);
+        if(conta_quantidade_de_interrupcoes == 1){
+                   u = K1*erro - K2*erro_ant + u_ant;
+                   PORTC.RC0 = !PORTC.RC0;
+                   if(u > 255)
+                   {
+                        duty_cycle = 255;
+                   }else{
+                   if( u<0){
+                       duty_cycle = 0;
+                   }else{
+                         duty_cycle = u;
+                   }
+        }
+        u_ant = u;
+        //FloatToStr(u,Debug);
+        //Lcd_Out(2,1,Debug);
+        erro_ant = erro;
+        conta_quantidade_de_interrupcoes = 0;
+
+        }// end atualiza��o de duty cycle
         TMR0 = 0x06;    // reinicia o contador para garantir os 250 contagens
 
      } // end IF
@@ -56,33 +82,6 @@ void main(){
    //Lcd_Cmd(_LCD_CURSOR_OFF);
 
    while(1){
-        leitura = ADC_Read(4);
-        leitura = (leitura*5.0f/1024.0f);  // 0.0488 = (5/1024)
-        //FloatToStr(leitura,Debug);
-        //Lcd_Out(1,1,Debug);
-        erro = ref - leitura;
-        //FloatToStr(erro,Debug);
-        //Lcd_Out(1,1,Debug);
-        if(conta_quantidade_de_interrupcoes == 1){
-                   u = K1*erro - K2*erro_ant + u_ant;
-                   PORTC.RC0 = !PORTC.RC0;
-                   if(u > 255)
-                   {
-                        duty_cycle = 255;
-                   }else{
-                   if( u<0){
-                       duty_cycle = 0;
-                   }else{
-                         duty_cycle = u;
-                   }
-        }
-        u_ant = u;
-        //FloatToStr(u,Debug);
-        //Lcd_Out(2,1,Debug);
-        erro_ant = erro;
-        conta_quantidade_de_interrupcoes = 0;
-
-        }// end atualiza��o de duty cycle
    PWM1_Set_Duty(duty_cycle);
    }// end loop principal
 
